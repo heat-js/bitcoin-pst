@@ -1,23 +1,24 @@
 
 import PartiallySignedTransaction 		from '../index'
-import { networks, ECPair, payments } 	from 'bitcoinjs-lib'
 import crypto 							from 'crypto'
+import { TransactionBuilder, networks, ECPair, payments } from 'bitcoinjs-lib'
 
 describe 'PartiallySignedTransaction', ->
 
 	network = networks.testnet
 
-	keyPairs = [1, 2, 3].map (i) ->
+	pairs = [1, 2, 3].map (i) ->
 		hash = crypto.createHash 'sha256'
 			.update String i
 			.digest()
 
 		return ECPair.fromPrivateKey hash, { network }
 
-	pubkeys = keyPairs.map (pair) ->
+	pubkeys = pairs.map (pair) ->
 		return pair.publicKey
 
-	it 'should create a transaction', ->
+
+	it 'should create a transaction from pst', ->
 
 		# --------------------------------------------------------
 		# Build the partial transaction
@@ -55,7 +56,7 @@ describe 'PartiallySignedTransaction', ->
 		# --------------------------------------------------------
 		# Sign an input
 
-		pst.sign 0, keyPairs[0]
+		pst.sign 0, pairs[0]
 
 		# --------------------------------------------------------
 		# Simulate broadcasting of the PST
@@ -65,7 +66,7 @@ describe 'PartiallySignedTransaction', ->
 		# --------------------------------------------------------
 		# Co-sign an input
 
-		pst.sign 0, keyPairs[1]
+		pst.sign 0, pairs[1]
 
 		# --------------------------------------------------------
 		# Simulate broadcasting of the PST
@@ -75,7 +76,7 @@ describe 'PartiallySignedTransaction', ->
 		# --------------------------------------------------------
 		# Co-sign an input
 
-		pst.sign 0, keyPairs[2]
+		pst.sign 0, pairs[2]
 
 		# --------------------------------------------------------
 		# Simulate broadcasting of the PST
@@ -101,32 +102,14 @@ describe 'PartiallySignedTransaction', ->
 		# --------------------------------------------------------
 
 		expect transaction.getId()
-			.toBe '115393aa809c721bc36de7c4f5f52f4190222067970714fceb298087f8aa729b'
-
-		expect transaction.toHex()
-			.toBe [
-				'020000000001016ba496843fb9d0912837da1a8bcd4e2817a8caf2a1ede2498de735'
-				'105935d2810000000023220020cbe6dc447159db36b21aa011207073e93c196adb4d'
-				'd71614aaed4f12bf9a00e1ffffffff01102700000000000017a91474a8936e59d193'
-				'813080bf514a412e8ff385c98287050047304402203ca4889be7d9090db69c8cb67d'
-				'6bd34e70bea15971ce7f2638ee538a8c3334e002207a4f4997c90ba0a10aa1e20e43'
-				'7c40127da4eeb43ef86e6a936a1d0c857e382801473044022033ea0a23a9854710bd'
-				'2ddbac3abd2c49a2738b4f46cc246da540a728702f9797022057ad8b0207289838e3'
-				'60dab8851f27aff31a8bb6056ddb738170a008fe7490d0014730440220321665c1bf'
-				'f43958b29c7124b211f6dde8d8bb5506fdbefa6f3bc444382089fb02205a0148387f'
-				'212b9c1599add39629db339049916135adabf0d9852caf44532f710169522103fdf4'
-				'907810a9f5d9462a1ae09feee5ab205d32798b0ffcc379442021f84c5bbf21039ebd'
-				'374eea3befddf46bbb182e291fb719ee1b705b0b7802161038eb7da8a0362102b091'
-				'5b333926d5338cadba614164c99be83592a13d8bdecb6f679593c11b79d853ae0000'
-				'0000'
-			].join ''
+			.toBe '9057fa857f9a66ef9cdcda8584f835fd3c861ced41fdbedae5a4f32011c007d9'
 
 		# --------------------------------------------------------
 
 		input = transaction.ins[0]
 
 		expect input.hash.toString 'hex'
-			.toBe '6ba496843fb9d0912837da1a8bcd4e2817a8caf2a1ede2498de735105935d281'
+			.toBe '81d235591035e78d49e2eda1f2caa817284ecd8b1ada372891d0b93f8496a46b'
 
 		expect input.sequence
 			.toBe 0xffffffff
@@ -146,5 +129,45 @@ describe 'PartiallySignedTransaction', ->
 
 		expect output.value
 			.toBe 10000
+
+
+		# --------------------------------------------------------
+		# Create a transaction the normal way and see if it
+		# matches our pst transaction.
+
+		builder = new TransactionBuilder network
+		builder.addInput(
+			Buffer.from(pst.inputs[0].txid, 'hex').reverse()
+			pst.inputs[0].vout
+			pst.inputs[0].sequence
+			Buffer.from pst.inputs[0].script, 'hex'
+		)
+
+		builder.addOutput(
+			pst.outputs[0].address
+			pst.outputs[0].value
+		)
+
+		p2ms 	= payments.p2ms { m: 2, pubkeys, network }
+		p2wsh 	= payments.p2wsh { redeem: p2ms, network }
+		p2sh 	= payments.p2sh { redeem: p2wsh, network }
+
+		for pair in pairs
+			builder.sign(
+				0
+				pair
+				p2sh.redeem.output
+				null
+				pst.inputs[0].value
+				p2wsh.redeem.output
+			)
+
+		expectation = builder.build()
+
+		expect transaction.getId()
+			.toBe expectation.getId()
+
+		expect transaction.toHex()
+			.toBe expectation.toHex()
 
 		return

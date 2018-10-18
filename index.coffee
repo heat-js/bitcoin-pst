@@ -142,7 +142,7 @@ export default class PartiallySignedTransaction
 		for input in @inputs
 			input = @_unserialize input
 			builder.addInput(
-				input.txid
+				input.txid.reverse()
 				parseInt input.vout, 10
 				input.sequence
 				input.script
@@ -197,7 +197,7 @@ export default class PartiallySignedTransaction
 		for input in @inputs
 			input = @_unserialize input
 			builder.addInput(
-				input.txid
+				input.txid.reverse()
 				parseInt input.vout, 10
 				input.sequence
 				input.script
