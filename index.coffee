@@ -131,7 +131,20 @@ export default class PartiallySignedTransaction
 	addScript: (index, redeemScript, witnessScript) ->
 		input = @inputs[index]
 		input.redeemScript 	= redeemScript.toString 'hex'
-		input.witnessScript = witnessScript.toString 'hex'
+		if witnessScript
+			input.witnessScript = witnessScript.toString 'hex'
+
+		return @
+
+	addRedeemScript: (index, script) ->
+		input = @inputs[index]
+		input.redeemScript 	= script.toString 'hex'
+
+		return @
+
+	addWitnessScript: (index, script) ->
+		input = @inputs[index]
+		input.witnessScript = script.toString 'hex'
 
 		return @
 
