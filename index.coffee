@@ -16,6 +16,7 @@ export default class PartiallySignedTransaction
 		'signScript'
 		'signType'
 		'signatures'
+		'pubkeys'
 	]
 
 	@BUFFER_PROPERTIES = [
@@ -130,8 +131,21 @@ export default class PartiallySignedTransaction
 
 	addScript: (index, redeemScript, witnessScript) ->
 		input = @inputs[index]
-		input.redeemScript 	= redeemScript.toString 'hex'
-		input.witnessScript = witnessScript.toString 'hex'
+		input.redeemScript = redeemScript.toString 'hex'
+		if witnessScript
+			input.witnessScript = witnessScript.toString 'hex'
+
+		return @
+
+	addRedeemScript: (index, script) ->
+		input = @inputs[index]
+		input.redeemScript = script.toString 'hex'
+
+		return @
+
+	addWitnessScript: (index, script) ->
+		input = @inputs[index]
+		input.witnessScript = script.toString 'hex'
 
 		return @
 
@@ -144,8 +158,8 @@ export default class PartiallySignedTransaction
 			builder.addInput(
 				input.txid.reverse()
 				parseInt input.vout, 10
-				input.sequence
-				input.script
+				input.sequence 	or null
+				input.script 	or null
 			)
 
 		for output in @outputs
@@ -163,17 +177,22 @@ export default class PartiallySignedTransaction
 
 		input = @_filter input, PartiallySignedTransaction.SIGNED_INPUT_PROPERTIES
 		input = @_unserialize input
-		input.signatures = @_unserializeArray input.signatures
+
+		if input.signatures
+			input.signatures = @_unserializeArray input.signatures
+
+		if input.pubkeys
+			input.pubkeys = @_unserializeArray input.pubkeys
 
 		Object.assign entry, input
 
 		builder.sign(
 			index
 			keyPair
-			input.redeemScript
+			input.redeemScript or null
 			null
 			input.value
-			input.witnessScript
+			input.witnessScript or null
 		)
 
 		# ---------------------------------------------
@@ -184,7 +203,12 @@ export default class PartiallySignedTransaction
 
 		entry = @_filter entry, PartiallySignedTransaction.SIGNED_INPUT_PROPERTIES
 		entry = @_serialize entry
-		entry.signatures = @_serializeArray entry.signatures
+
+		if entry.signatures
+			entry.signatures = @_serializeArray entry.signatures
+
+		if entry.pubkeys
+			entry.pubkeys = @_serializeArray entry.pubkeys
 
 		Object.assign @inputs[index], entry
 
@@ -216,7 +240,8 @@ export default class PartiallySignedTransaction
 
 			input = @_filter input, PartiallySignedTransaction.SIGNED_INPUT_PROPERTIES
 			input = @_unserialize input
-			input.signatures = @_unserializeArray input.signatures
+			input.signatures 	= @_unserializeArray input.signatures
+			input.pubkeys 		= @_unserializeArray input.pubkeys
 
 			Object.assign entry, input
 
