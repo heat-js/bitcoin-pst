@@ -26,17 +26,17 @@ describe 'PartiallySignedTransaction', ->
 		pst = new PartiallySignedTransaction network
 
 		pst.addInput {
-			txid: 		'6ba496843fb9d0912837da1a8bcd4e2817a8caf2a1ede2498de735105935d281'
+			txid: 		'7bc20f323aa79cfa893a2af8715f06f911f2eeef60cec5d6fa98688dceed699d'
 			vout: 		0
 			sequence: 	0xffffffff
-			address:	'2N3t4KPt9dpnYXJX4m3QpGmTt82Ry4N6u7G'
-			script: 	'16001472432cb0514f964326b8e5dbd457b21cf1d3200c'
-			value: 		11000
+			address:	'2Mz2SLP6sUfZb7oJX8hsyFCyxpJupXbv23f'
+			script: 	'a9144a5dc78289a3437c85ab4b25c072cac23a938a1587'
+			value: 		70000
 		}
 
 		pst.addOutput {
-			address:	'2N3t4KPt9dpnYXJX4m3QpGmTt82Ry4N6u7G'
-			value: 		10000
+			address:	'2Mz2SLP6sUfZb7oJX8hsyFCyxpJupXbv23f'
+			value: 		69000
 		}
 
 		# --------------------------------------------------------
@@ -54,34 +54,19 @@ describe 'PartiallySignedTransaction', ->
 		pst.addScript 0, p2sh.redeem.output, p2wsh.redeem.output
 
 		# --------------------------------------------------------
-		# Sign an input
+		# Sign the input with each private key
 
-		pst.sign 0, pairs[0]
+		for pair in pairs
 
-		# --------------------------------------------------------
-		# Simulate broadcasting of the PST
+			pst.sign 0, pair
 
-		pst = PartiallySignedTransaction.fromHex pst.toHex(), network
+			# ----------------------------------------------------
+			# Simulate broadcasting of the PST
 
-		# --------------------------------------------------------
-		# Co-sign an input
-
-		pst.sign 0, pairs[1]
-
-		# --------------------------------------------------------
-		# Simulate broadcasting of the PST
-
-		pst = PartiallySignedTransaction.fromHex pst.toHex(), network
-
-		# --------------------------------------------------------
-		# Co-sign an input
-
-		pst.sign 0, pairs[2]
-
-		# --------------------------------------------------------
-		# Simulate broadcasting of the PST
-
-		pst = PartiallySignedTransaction.fromHex pst.toHex(), network
+			pst = PartiallySignedTransaction.fromHex(
+				pst.toHex()
+				network
+			)
 
 		# --------------------------------------------------------
 		# Finalize / Build the transaction.
@@ -94,22 +79,22 @@ describe 'PartiallySignedTransaction', ->
 			.toBe '1000'
 
 		expect pst.getInputAmount().toString()
-			.toBe '11000'
+			.toBe '70000'
 
 		expect pst.getOutputAmount().toString()
-			.toBe '10000'
+			.toBe '69000'
 
 		# --------------------------------------------------------
 
 		expect transaction.getId()
-			.toBe '9057fa857f9a66ef9cdcda8584f835fd3c861ced41fdbedae5a4f32011c007d9'
+			.toBe '37e064e846ab7bca804f60ce3da0c332480313dbef6985473e506a79e8b32a98'
 
 		# --------------------------------------------------------
 
 		input = transaction.ins[0]
 
 		expect input.hash.toString 'hex'
-			.toBe '81d235591035e78d49e2eda1f2caa817284ecd8b1ada372891d0b93f8496a46b'
+			.toBe '9d69edce8d6898fad6c5ce60efeef211f9065f71f82a3a89fa9ca73a320fc27b'
 
 		expect input.sequence
 			.toBe 0xffffffff
@@ -128,8 +113,7 @@ describe 'PartiallySignedTransaction', ->
 			.toBeDefined()
 
 		expect output.value
-			.toBe 10000
-
+			.toBe 69000
 
 		# --------------------------------------------------------
 		# Create a transaction the normal way and see if it
@@ -163,6 +147,8 @@ describe 'PartiallySignedTransaction', ->
 			)
 
 		expectation = builder.build()
+
+		console.log expectation.toHex()
 
 		expect transaction.getId()
 			.toBe expectation.getId()

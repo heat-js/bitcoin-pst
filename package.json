@@ -13,10 +13,10 @@
   },
   "scripts": {
     "test": "./node_modules/.bin/jest",
-    "publish": "if yarn test; then yarn publish; fi",
-    "patch": "if yarn test; then yarn publish --patch; fi",
-    "minor": "if yarn test; then yarn publish --minor; fi",
-    "major": "if yarn test; then yarn publish --major; fi",
+    "publish": "if yarn test; then npm publish; fi",
+    "patch": "if yarn test; then npm publish --patch; fi",
+    "minor": "if yarn test; then npm publish --minor; fi",
+    "major": "if yarn test; then npm publish --major; fi",
     "prepublish": "bash ./build.sh",
     "postpublish": "yarn cleanup",
     "cleanup": "rm ./*.js"
