@@ -1,6 +1,6 @@
 {
   "name": "@heat/bitcoin-pst",
-  "version": "0.0.2",
+  "version": "0.2.0",
   "main": "index",
   "license": "MIT",
   "private": false,
@@ -13,10 +13,9 @@
   },
   "scripts": {
     "test": "./node_modules/.bin/jest",
-    "publish": "if yarn test; then npm publish; fi",
-    "patch": "if yarn test; then npm publish --patch; fi",
-    "minor": "if yarn test; then npm publish --minor; fi",
-    "major": "if yarn test; then npm publish --major; fi",
+    "patch": "if yarn test; then yarn publish --patch; fi",
+    "minor": "if yarn test; then yarn publish --minor; fi",
+    "major": "if yarn test; then yarn publish --major; fi",
     "prepublish": "bash ./build.sh",
     "postpublish": "yarn cleanup",
     "cleanup": "rm ./*.js"
