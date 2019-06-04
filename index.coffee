@@ -240,6 +240,7 @@ export default class PartiallySignedTransaction
 
 			input = @_filter input, PartiallySignedTransaction.SIGNED_INPUT_PROPERTIES
 			input = @_unserialize input
+
 			input.signatures 	= @_unserializeArray input.signatures
 			input.pubkeys 		= @_unserializeArray input.pubkeys
 
@@ -251,6 +252,31 @@ export default class PartiallySignedTransaction
 		# Build the signed transaction
 
 		return builder.build()
+
+	buildIncomplete: ->
+
+		builder	= new TransactionBuilder @network
+
+		for input in @inputs
+			input = @_unserialize input
+			builder.addInput(
+				input.txid.reverse()
+				parseInt input.vout, 10
+				input.sequence
+				input.script
+			)
+
+		for output in @outputs
+			output = @_unserialize output
+			builder.addOutput(
+				output.address
+				output.value
+			)
+
+		# ---------------------------------------------
+		# Build the unsigned transaction
+
+		return builder.buildIncomplete()
 
 
 	getFee: ->

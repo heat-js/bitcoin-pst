@@ -274,3 +274,31 @@ describe 'PartiallySignedTransaction', ->
 			.toBe expectation.toHex()
 
 		return
+
+	it 'should be able to build the transaction before the transaction is signed', ->
+
+		p2wpkh 	= payments.p2wpkh { pubkey: pubkeys[0], network }
+		p2sh 	= payments.p2sh { redeem: p2wpkh, network }
+		address = p2sh.address
+
+		# --------------------------------------------------------
+		# Build the partial transaction
+
+		pst = new PartiallySignedTransaction network
+
+		pst.addInput {
+			txid: 		'6ba496843fb9d0912837da1a8bcd4e2817a8caf2a1ede2498de735105935d281'
+			vout: 		0
+			value: 		11000
+		}
+
+		pst.addOutput {
+			address:	'2N3t4KPt9dpnYXJX4m3QpGmTt82Ry4N6u7G'
+			value: 		10000
+		}
+
+		pst.addRedeemScript 0, p2sh.redeem.output
+		pst.sign 0, pairs[0]
+
+		expect pst.buildIncomplete().getId()
+			.not.toBe pst.build().getId()
